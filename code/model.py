@@ -7,6 +7,8 @@ from operator import itemgetter
 import matplotlib.pyplot as plt
 from time import time
 import sys, os
+from level_function import  cy_medal_organizer
+
 def read_stations(table):
     stations = []
     for tup in table.iterrows():
@@ -18,45 +20,6 @@ def read_stations(table):
         stations.append(stat)
     Sol.set_stations(stations)
     return stations
-
-def organize_medal_table(table, medal_max=np.inf):
-    """organize medal table traditional"""
-    org_criteria = ['Unb', 'Tsp']
-    table.sort_values(org_criteria, inplace=True)
-
-    subtable = table[table['Pod_lev'] == -1]
-    level = 0
-    while (not subtable.empty) and (level < medal_max):
-        index_to_change = []
-        #First special case
-        subtable.at[subtable.index[0],'Pod_lev'] = level
-        __, l_tsp, __, __ = subtable.iloc[0]
-        for row in subtable.itertuples():
-            i, __, tsp, __, __ = row
-            if tsp <= l_tsp:
-                l_tsp = tsp
-                index_to_change.append(i)
-        table.loc[index_to_change, 'Pod_lev'] = level
-        level += 1
-        subtable = table[table['Pod_lev'] == -1]
-    table = table[table['Pod_lev'] != -1]
-    return table, olimpic_results(table)
-
-def olimpic_results(table):
-    """olimpic results in a traditional way"""
-    metals = ['oro', 'plata', 'bronce']
-    cut_table = table[['Sol', 'Pod_lev']]
-    n_sols ,high_pod_lev = cut_table.max() + 1
-    medal_table = np.zeros([n_sols, high_pod_lev], dtype=int)
-    for row in cut_table.itertuples():
-        __, iSol, lev_pod = row
-        medal_table[iSol, lev_pod] += 1
-    medal_table = pd.DataFrame(medal_table)
-    cols = list(medal_table.columns)
-    medal_table.sort_values(by=cols, inplace=True, ascending=False)
-    medal_table.index.name = 'Soluciones'
-    medal_table.columns.name = 'Medallas'
-    return medal_table
 
 def normalized_order(order):
     '''after taking out the alike comparisons, the order of the solutions
@@ -250,6 +213,7 @@ class Sol:
         # i and j can be the same
         i, j = np.random.randint(0, n, 2)
         self.route[i], self.route[j] = self.route[j], self.route[i]
+        self.index_end_route = np.random.randint(2, n)
 
     def display(self):
         print(f'''---------Solution object---------
@@ -267,7 +231,7 @@ class Sol:
             end route at_ {self.route[self.index_end_route-1]} '
 
     def __repr__(self):
-        return f'route: {self.route}\n'
+        return f'route: {self.route[:self.index_end_route]}\n'
 
 
 class SolCollection:
@@ -275,6 +239,14 @@ class SolCollection:
     A collection of all solutions
     ---
     Attributes:
+        sols: (list(Sol))
+            The list of solutions
+        k: (int)
+            Refers to the number of individuals type Sol in the list sols.
+        n_sons: (int) 
+            Number of sons to have at every iteration.
+        n_random_sols: (int)
+            Number of random solutions to include at every iteration.
         
     """
     # Each solution has a vector of associated costs, for all it's child solutions
@@ -286,8 +258,9 @@ class SolCollection:
 
         # Parameters of model
         self.n_sons = int(round(ratio_sons * self.k))
- 
+        self.n_elite = n_pob// 2
         self.n_random_sols = num_random_sols
+        self.n_mutations = int(round(ratio_mutation * self.k ))
 
         # Best sols info
         self.best_sol = self.sols[0]
@@ -296,40 +269,38 @@ class SolCollection:
         self.list_points = []
 
 
-    def train_time(self, max_time, show_all=False, plot_advances="", ret_times=False):
+    def train_time(self, max_time, interactive=False, ret_times=False):
         'Time is in seconds'
         time_to_chunk = max_time/ 4
         overall_time = 0
-        times = dict()
-        levels_table, medal_table = self.medal_table()
-        show_chunk = False
+        # times = dict()
+        levels_table = self.medal_table()
         iters = 0
         while overall_time < max_time:
             iters += 1
             time_init = time()
-            levels_table, medal_table = self.medal_table(show_chunk)
-            times =  self.time_it("medal2", times)
+            levels_table = self.medal_table(interactive)
+            # times =  self.time_it("Medals", times)
             parents = self.parent_selection()
-            times =  self.time_it("parents", times)
-            sols = self.gen_crossover(parents)
-            times =  self.time_it("crossover", times)
+            # times =  self.time_it("parents", times)
+            sols = self.reproduce(parents)
+            # times =  self.time_it("crossover", times)
             self.one_gen_mutation()
-            times =  self.time_it("mutation", times)
+            # times =  self.time_it("mutation", times)
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
                 time_to_chunk += max_time /4
-                if plot_advances:
-                    self.list_points.append(self.get_all_costs()) #save results
-                if show_all:
+                if interactive:
+                    bests = levels_table[levels_table['Pod_lev'] == 0]
+                    self.list_points.append([best.values[, 0:2] ]) #save results
                     print('---------------------------------------------------------')
                     print(f'time := {overall_time:.2f}.  iterations : {iters}')
-                    print(medal_table)
                     print(parents)
                     print(sols)
-        if plot_advances:
-            self.plot_chunks(label=f'plot_advances_time:{max_time}', max_time=max_time)
-        if ret_times:        
-            return dict_to_pd_table(times)
+        # if interactive:
+        #     self.plot_chunks(label=f'plot_advances_time:{max_time}', max_time=max_time)
+        # if ret_times:        
+        #     return dict_to_pd_table(times)
         return self.get_paretto_sols()
 
     def time_it(self, name, dic):
@@ -378,6 +349,7 @@ class SolCollection:
         return costs
 
     def medal_table(self, show=False):
+        # Get costs
         columns = ['Unb', 'Tsp', 'Sol', 'Pod_lev']
         data = []
         for i, sol in enumerate(self.sols):
@@ -385,17 +357,25 @@ class SolCollection:
             tsp = sol.cost_tsp
             data.append([unb, tsp, i, -1])
         table = pd.DataFrame(data, columns=columns)
-        n = len(self.sols[0])
-        levels_table, medal_table = organize_medal_table(table, medal_max=n)
-        if show:
-            print('Levels table')
-            print(levels_table)
-            print('Medal table')
-            print(medal_table)
-        order_solutions = list(medal_table.index)
-        self.sols = [self.sols[i] for i in order_solutions]
-        # self.non_dominated = table[table['Pod_lev'] == 0]
-        return levels_table, medal_table
+        table.index.name = 'Solution'
+        n = len(self.sols)
+        
+        # Sort table
+        org_criteria = ['Unb', 'Tsp']
+        table.sort_values(org_criteria, inplace=True)
+        d = table.values[:, 0]
+        c = table.values[:, 1]
+        l = np.repeat(-1, len(c))
+        cy_medal_organizer(d, c, l, n)
+        table['Pod_lev'] = l
+
+        # What to do with solutions which TSP == 0
+        # table['Pod_lev'][table['Tsp' == 0]] = 3
+        # Sort solutions from best to worst
+        table.sort_values(['Pod_lev'], inplace=True)
+        order_solutions = table.index
+        self.sols = [self.sols[ii] for ii in order_solutions[:self.k]]
+        return table
 
     def parent_selection(self):
         ''' Function to select parents from self.sols to do the apareation '''
@@ -422,7 +402,7 @@ class SolCollection:
                 break
         return [parent1, parent2]
 
-    def gen_crossover(self, parents):
+    def reproduce(self, parents):
         sons = []
         for (j1, j2) in parents:
             son = self.sols[j1].reproduce(self.sols[j2])
@@ -618,9 +598,9 @@ class SolCollection:
         plt.ylabel('Unbalance cost')
         plt.title('Pareto Curve for different chunks')
         plt.legend()
-        if not label:
-            label = f'_iterations{self.n_iters}'
-        plt.savefig(f'./results/evolution_frontier/n_pob{self.k}{label}.png')
+        # if not label:
+        #     label = f'_iterations{self.n_iters}'
+        # plt.savefig(f'./results/evolution_frontier/n_pob{self.k}{label}.png')
         return plt
 
     def gen_random_sols(self, num_sols=0):
