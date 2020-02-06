@@ -271,7 +271,8 @@ class SolCollection:
 
     def train_time(self, max_time, interactive=False, ret_times=False):
         'Time is in seconds'
-        time_to_chunk = max_time/ 4
+        time_to_chunk = 0
+        chuncked_times, chuncked_iters  = [], [] # To return plots in interactive, 
         overall_time = 0
         # times = dict()
         levels_table = self.medal_table()
@@ -290,15 +291,17 @@ class SolCollection:
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
                 time_to_chunk += max_time /4
+                chuncked_times.append(overall_time)
+                chuncked_iters.append(iters)
                 if interactive:
                     bests = levels_table[levels_table['Pod_lev'] == 0]
-                    self.list_points.append([best.values[, 0:2] ]) #save results
+                    self.list_points.append(bests.values[:, 0:2]) #save results
                     print('---------------------------------------------------------')
                     print(f'time := {overall_time:.2f}.  iterations : {iters}')
                     print(parents)
                     print(sols)
-        # if interactive:
-        #     self.plot_chunks(label=f'plot_advances_time:{max_time}', max_time=max_time)
+        if interactive:
+            return(self.list_points, chuncked_times, chuncked_iters)
         # if ret_times:        
         #     return dict_to_pd_table(times)
         return self.get_paretto_sols()
