@@ -1,0 +1,17 @@
+
+### SOL
+In object sols I deleted the random keys option.
+One gen mutation is just change 2 in route
+
+While working in the object as one solution that can be either complete or
+incomplete is "easier" thinking it as a set is faster computationally.
+
+
+Objeto Sol:
+
+El entrecruzamiento entre soluciones incompletas deberia ser algo que discutamos
+ Corregi el cruce para ruta, ¿Como cruzar rutas con diferentes
+ numero de nodos? ver en avances
+
+
+ el metodo SolCollection() ya se puede inicializar, pero falta corregir el train_time
