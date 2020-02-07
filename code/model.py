@@ -269,7 +269,7 @@ class SolCollection:
         self.list_points = []
 
 
-    def train_time(self, max_time, interactive=False, ret_times=False):
+    def train_time(self, max_time, interactive=False, n_chks=4 ,ret_times=False):
         'Time is in seconds'
         time_to_chunk = 0
         chuncked_times, chuncked_iters  = [], [] # To return plots in interactive, 
@@ -290,7 +290,7 @@ class SolCollection:
             # times =  self.time_it("mutation", times)
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
-                time_to_chunk += max_time /4
+                time_to_chunk += max_time /n_chks
                 chuncked_times.append(overall_time)
                 chuncked_iters.append(iters)
                 if interactive:
