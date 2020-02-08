@@ -15,3 +15,10 @@ El entrecruzamiento entre soluciones incompletas deberia ser algo que discutamos
 
 
  el metodo SolCollection() ya se puede inicializar, pero falta corregir el train_time
+
+####################################################################
+1. Soluciones completas siempre.
+2. Soluciones incompletas.
+
+Cruzar fijando i_j, meter el i_j de la sol2 entre cada uno de los arcos de
+la sol1.  Después escoger la de menor costo tsp.
