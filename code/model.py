@@ -249,7 +249,6 @@ class SolCollection:
             Number of random solutions to include at every iteration.
         
     """
-    # Each solution has a vector of associated costs, for all it's child solutions
     def __init__(self, n_pob, ratio_sons=.6,
                 ratio_mutation = 0.2, num_random_sols=0):
         # Define solutions
@@ -263,6 +262,7 @@ class SolCollection:
         self.n_mutations = int(round(ratio_mutation * self.k ))
 
         # Best sols info
+        self._times = {} # Track times, done by decorator @track_time 
         self.best_sol = self.sols[0]
         self.best_sol_value_unb = np.inf
         self.best_sol_value_tsp = np.inf
@@ -351,6 +351,7 @@ class SolCollection:
             costs[i*n: (i+1)*n] = np.transpose([costs_unb, costs_tsp])
         return costs
 
+@track_time
     def medal_table(self, show=False):
         # Get costs
         columns = ['Unb', 'Tsp', 'Sol', 'Pod_lev']
@@ -380,6 +381,7 @@ class SolCollection:
         self.sols = [self.sols[ii] for ii in order_solutions[:self.k]]
         return table
 
+@track_time
     def parent_selection(self):
         ''' Function to select parents from self.sols to do the apareation '''
         n_sons = self.n_sons
@@ -390,6 +392,7 @@ class SolCollection:
         self.parents = parents
         return parents
 
+@track_time
     def biased_parents(self):
         '''
         Considers that solutions are organized from the best to the worst.
@@ -405,6 +408,7 @@ class SolCollection:
                 break
         return [parent1, parent2]
 
+@track_time
     def reproduce(self, parents):
         sons = []
         for (j1, j2) in parents:
@@ -553,7 +557,8 @@ class SolCollection:
         #             # print('local search suceed.')
         #             self.sols = [*self.sols, *new_sols]
         return self.sols
-            
+
+@track_time
     def one_gen_mutation(self):
         k = len(self.sols)
         n_mutations = self.n_mutations

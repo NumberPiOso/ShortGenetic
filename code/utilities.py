@@ -1,6 +1,9 @@
 import sys
 import os
 import pandas as pd
+from functools import wraps
+from time import time
+
 
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
@@ -18,3 +21,16 @@ def read_file(fp):
     table = pd.read_csv(fp, header=None, names=names, index_col=0,
                         usecols=names[:-1])
     return table
+
+def track_time(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time()
+        result = func(*args, **kwargs)
+        elapsed_time_in_s = time() - start_time
+        me = args[0]
+        me._times[func.__name__] = (
+            me._times.get(func.__name__, 0) + elapsed_time_in_seconds)
+        return result
+    return wrapper
+
