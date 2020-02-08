@@ -30,7 +30,7 @@ def track_time(func):
         elapsed_time_in_s = time() - start_time
         me = args[0]
         me._times[func.__name__] = (
-            me._times.get(func.__name__, 0) + elapsed_time_in_seconds)
+            me._times.get(func.__name__, 0) + elapsed_time_in_s)
         return result
     return wrapper
 

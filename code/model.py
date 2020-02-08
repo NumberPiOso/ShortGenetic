@@ -268,7 +268,6 @@ class SolCollection:
         self.best_sol_value_tsp = np.inf
         self.list_points = []
 
-
     def train_time(self, max_time, interactive=False, n_chks=4 ,ret_times=False):
         'Time is in seconds'
         time_to_chunk = 0
@@ -305,12 +304,6 @@ class SolCollection:
         # if ret_times:        
         #     return dict_to_pd_table(times)
         return self.get_paretto_sols()
-
-    def time_it(self, name, dic):
-        elapsed_time = time() - self.last_time
-        dic[name] =  dic.get(name,0) + elapsed_time
-        self.last_time = time()
-        return dic
 
     def get_paretto_sols(self):
         n = len(self.sols[0])
@@ -351,7 +344,7 @@ class SolCollection:
             costs[i*n: (i+1)*n] = np.transpose([costs_unb, costs_tsp])
         return costs
 
-@track_time
+    @track_time
     def medal_table(self, show=False):
         # Get costs
         columns = ['Unb', 'Tsp', 'Sol', 'Pod_lev']
@@ -381,7 +374,7 @@ class SolCollection:
         self.sols = [self.sols[ii] for ii in order_solutions[:self.k]]
         return table
 
-@track_time
+    @track_time
     def parent_selection(self):
         ''' Function to select parents from self.sols to do the apareation '''
         n_sons = self.n_sons
@@ -392,7 +385,7 @@ class SolCollection:
         self.parents = parents
         return parents
 
-@track_time
+    @track_time
     def biased_parents(self):
         '''
         Considers that solutions are organized from the best to the worst.
@@ -408,7 +401,7 @@ class SolCollection:
                 break
         return [parent1, parent2]
 
-@track_time
+    @track_time
     def reproduce(self, parents):
         sons = []
         for (j1, j2) in parents:
@@ -558,7 +551,7 @@ class SolCollection:
         #             self.sols = [*self.sols, *new_sols]
         return self.sols
 
-@track_time
+    @track_time
     def one_gen_mutation(self):
         k = len(self.sols)
         n_mutations = self.n_mutations
