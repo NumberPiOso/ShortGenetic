@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from time import time
 import sys, os
 from level_function import  cy_medal_organizer
+from collections import defaultdict
 
 def read_stations(table):
     stations = []
@@ -262,7 +263,7 @@ class SolCollection:
         self.n_mutations = int(round(ratio_mutation * self.k ))
 
         # Best sols info
-        self._times = {} # Track times, done by decorator @track_time 
+        self._times = defaultdict(int) # Track times, done by decorator @track_time 
         self.best_sol = self.sols[0]
         self.best_sol_value_unb = np.inf
         self.best_sol_value_tsp = np.inf
@@ -280,13 +281,9 @@ class SolCollection:
             iters += 1
             time_init = time()
             levels_table = self.medal_table(interactive)
-            # times =  self.time_it("Medals", times)
             parents = self.parent_selection()
-            # times =  self.time_it("parents", times)
             sols = self.reproduce(parents)
-            # times =  self.time_it("crossover", times)
             self.one_gen_mutation()
-            # times =  self.time_it("mutation", times)
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
                 time_to_chunk += max_time /n_chks
