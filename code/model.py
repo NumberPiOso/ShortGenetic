@@ -137,9 +137,8 @@ class Sol:
                 cost += stat_i.distance(stat_j)
                 stat_i = stat_j
         return cost
-    
 
-    def reproduce(self, other, interactive=False):
+    def reproduce(self, other,interactive=False):
         '''
         Input:
             self: Object type sol
@@ -181,6 +180,7 @@ class Sol:
             print(f'End route has chosen to be {end_new_route}')
             new_sol.display()
         return new_sol
+
 
     @classmethod
     def two_opt_sol(cls, rks, i, j, route):
@@ -258,7 +258,7 @@ class SolCollection:
 
         # Parameters of model
         self.n_sons = int(round(ratio_sons * self.k))
-        self.n_elite = n_pob// 2
+        self.n_elite = n_pob
         self.n_random_sols = num_random_sols
         self.n_mutations = int(round(ratio_mutation * self.k ))
 
@@ -274,6 +274,7 @@ class SolCollection:
         time_to_chunk = 0
         chuncked_times, chuncked_iters  = [], [] # To return plots in interactive, 
         overall_time = 0
+        best_points = [[1, 1]]
         # times = dict()
         levels_table = self.medal_table()
         iters = 0
@@ -290,11 +291,12 @@ class SolCollection:
                 chuncked_times.append(overall_time)
                 chuncked_iters.append(iters)
                 if interactive:
-                    bests = levels_table[levels_table['Pod_lev'] == 0]
-                    self.list_points.append(bests.values[:, 0:2]) #save results
+                    bests = levels_table[levels_table['Pod_lev'] == 0].values[:,0:2]
+                    best_points = np.concatenate([best_points, bests])
+                    self.list_points.append(best_points) #save results
                     print('---------------------------------------------------------')
                     print(f'time := {overall_time:.2f}.  iterations : {iters}')
-                    print(parents)
+                    # print(parents)
                     print(sols)
         if interactive:
             return(self.list_points, chuncked_times, chuncked_iters)
@@ -574,6 +576,12 @@ class SolCollection:
         new_sols = [Sol(rks) for rks in new_rks]
         return new_sols
 
+    def get_times(self): 
+        data = self._times
+        df_times = pd.DataFrame.from_dict(data, orient='index', columns=['time(s)'])
+        df_times['%'] = df_times['time(s)']/ sum(df_times['time(s)']) 
+        return df_times
+  
     def __repr__(self):
         return (str(self.sols))
 
