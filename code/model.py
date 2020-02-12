@@ -214,7 +214,7 @@ class Sol:
         # i and j can be the same
         i, j = np.random.randint(0, n, 2)
         self.route[i], self.route[j] = self.route[j], self.route[i]
-        self.index_end_route = np.random.randint(2, n)
+        # self.index_end_route = np.random.randint(2, n)
 
     def display(self):
         print(f'''---------Solution object---------
@@ -567,39 +567,6 @@ class SolCollection:
         random_sols = self.gen_random_sols(self.n_random_sols)
         self.sols = [*self.sols[:sols_that_stay], *random_sols]
         return self.sols
-
-    def plot_chunks(self, label='', max_time=10):
-        k1 = len(self.list_points)
-        # alpha = np.linspace(.3, 1, num=k1)
-        colors = ['r', 'b', 'g', 'c', 'm']
-        for ri, points in enumerate(self.list_points):
-            ##### POINTS CLEANUP, LOOKING FOR NON DOMINATED #####
-            org_criteria = ['Unb', 'Tsp']
-            table = pd.DataFrame(points,columns=org_criteria)
-            table.sort_values(org_criteria, inplace=True)
-            non_dom_pts = []
-            l_dem, l_tsp = table.iloc[0]
-            non_dom_pts.append([l_dem, l_tsp])
-            for i, row in enumerate(table.itertuples()):
-                __, dem, tsp = row
-                if i == 0:
-                    non_dom_pts.append([dem, tsp])
-                else:
-                    if tsp < l_tsp:
-                        l_dem, l_tsp = dem, tsp
-                        non_dom_pts.append([l_dem, l_tsp])
-            non_dom_pts = np.array(non_dom_pts)
-            ##### POINTS CLEANUP, LOOKING FOR NON DOMINATED #####
-            # plt.plot(non_dom_pts[:,1], non_dom_pts[:,0], c=colors[ri], label=f'chunck {ri}')
-            plt.scatter(non_dom_pts[:,1], non_dom_pts[:,0], c=colors[ri], label=f'time {max_time*(ri+1)// 4}')
-        plt.xlabel('Route cost')
-        plt.ylabel('Unbalance cost')
-        plt.title('Pareto Curve for different chunks')
-        plt.legend()
-        # if not label:
-        #     label = f'_iterations{self.n_iters}'
-        # plt.savefig(f'./results/evolution_frontier/n_pob{self.k}{label}.png')
-        return plt
 
     def gen_random_sols(self, num_sols=0):
         n = len(self.sols[0])

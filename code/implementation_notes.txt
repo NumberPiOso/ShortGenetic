@@ -24,7 +24,7 @@ Cruzar fijando i_j, meter el i_j de la sol2 entre cada uno de los arcos de
 la sol1.  Después escoger la de menor costo tsp.
 
 ###################### Presentacion 09/02/2020
-El error es un error teórico el problema es que las mejor n soluciones tienes costo desbalance 6.
 
+El error es un error teórico el problema es que las mejor n soluciones tienes costo desbalance 6.
 El primer criterio de corte es el nivel y eso está bien, pero el segundo criterio de corte es las que estén primero, en las cuales las de menor desbalance tienen prelación.
 Cuando hay muchas soluciones de nivel 0 con debalance 6. Esas serán las elegidas.
