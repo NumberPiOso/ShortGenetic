@@ -138,17 +138,22 @@ class Sol:
                 stat_i = stat_j
         return cost
 
-    def reproduce(self, other,interactive=False):
+    def reproduce(self, other, option=1, interactive=False):
         '''
         Input:
             self: Object type sol
             other: Object type sol
-        Output:
-            new_sol: Object type sol
-                new_sol is the first son of self and other done
+            option (int):
+                1 -> new_sol is the first son of self and other done
                 by method described in page 7 in 
                 simple and efective evolutionary algorithm for the vehicle 
                 routing problem by Christian Prins (2004).
+                2 -> Solution is getting the subroute i, j of the second route son
+                     and trying to accomodate it in the first route so it
+                     is TSP cost optimal
+        Output:
+            new_sol: Object type sol
+                
         '''
         # Parameters
         route1 = self.route
@@ -156,27 +161,60 @@ class Sol:
         n = len(route1)
         
         # Define starting and ending point
-        start, end = sorted( random.sample( range(0,n), 2))
-        i, j = start, end+1 # For being end inclusive
-        
-        new_route = np.ones(n, dtype=int)*(-1)
+        start, end = sorted( random.sample( range(0,n-1),2))
+        i, j = start, end+1 # For being end inclusive for option1
+        if option == 1:
+            new_route = np.ones(n, dtype=int)*(-1)
 
-        # The middle ones are the same
-        new_route[i:j] = route1[i:j]
+            # The middle ones are the same
+            new_route[i:j] = route1[i:j]
 
-        i2 = j
-        for i1 in range(j, n+i):
-            while route2[i2%n] in new_route:
+            i2 = j
+            for i1 in range(j, n+i):
+                while route2[i2%n] in new_route:
+                    i2 += 1
+                    assert(i2 < n+i+j)
+                new_route[i1%n] = route2[i2%n]
                 i2 += 1
-                assert(i2 < n+i+j)
-            new_route[i1%n] = route2[i2%n]
-            i2 += 1
-        # print(new_route)
+        elif option == 2:            
+            subi_j = route2[i:j]
+            other_nodes = [x for x in route1 if x not in subi_j]
+            # The subroute subi_j is going to be placed at every arc of
+            # other nodes. With savings algorithm, find the best.
+            first_station_sub = Sol._stations[subi_j[0]]
+            last_station_sub = Sol._stations[subi_j[-1]]
+            best_index = -1
+            best_saving = -np.inf
+            for k in range(len(other_nodes)+1):
+                if k == 0:
+                    i = other_nodes[0]
+                    stat_i = Sol._stations[i]
+                    saving = -last_station_sub.distance(stat_i)
+                    # first is best
+                elif k == len(other_nodes):
+                    # Check this bound
+                    saving = - stat_i.distance(first_station_sub)
+                else:
+                    stat_i_1 = stat_i
+                    i = other_nodes[k]
+                    stat_i = Sol._stations[i]
+                    saving = stat_i.distance(stat_i_1) \
+                            - stat_i_1.distance(first_station_sub) \
+                            - last_station_sub.distance(stat_i) 
+                if saving > best_saving:
+                    best_saving = saving
+                    best_index = k
+                if interactive:
+                    print(f" Ahorro en {k-1} -> {k}: {saving} ")
+            bi = best_index
+            new_route = [*other_nodes[:bi], *subi_j, *other_nodes[bi:]]
+        # At this point I already have defined the new_route (int) vector.
+        
         end1, end2 = self.index_end_route, other.index_end_route
-        end_new_route = random.sample([end1, end2], k=1)[0] # def returns list
+        end_new_route = random.sample([end1, end2], k=1)[0] # sample returns list
         new_sol = Sol(new_route, end_new_route)
         if interactive:
-            print(f'Cut points are {i, j}')
+            print(f'Cut points are {start, end+1}')
             print(f'End route has chosen to be {end_new_route}')
             new_sol.display()
         return new_sol
@@ -269,7 +307,7 @@ class SolCollection:
         self.best_sol_value_tsp = np.inf
         self.list_points = []
 
-    def train_time(self, max_time, interactive=False, n_chks=4 ,ret_times=False):
+    def train_time(self, max_time, interactive=False, n_chks=4 ,ret_times=False,reproduction_type=1, print_=False):
         'Time is in seconds'
         time_to_chunk = 0
         chuncked_times, chuncked_iters  = [], [] # To return plots in interactive, 
@@ -283,7 +321,7 @@ class SolCollection:
             time_init = time()
             levels_table = self.medal_table(interactive)
             parents = self.parent_selection()
-            sols = self.reproduce(parents)
+            sols = self.reproduce(parents, option=reproduction_type)
             self.one_gen_mutation()
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
@@ -294,6 +332,7 @@ class SolCollection:
                     bests = levels_table[levels_table['Pod_lev'] == 0].values[:,0:2]
                     best_points = np.concatenate([best_points, bests])
                     self.list_points.append(best_points) #save results
+                if print_:
                     print('---------------------------------------------------------')
                     print(f'time := {overall_time:.2f}.  iterations : {iters}')
                     # print(parents)
@@ -401,7 +440,18 @@ class SolCollection:
         return [parent1, parent2]
 
     @track_time
-    def reproduce(self, parents):
+    def reproduce(self, parents, option=1):
+        '''
+        Reproduce the solutions of the parents using method Sol.reproduce.
+        Inputs:
+            parents (list[int, int])
+                List of indexes of the parents.
+            option (int):
+                Option to pass directly to reproduce method.
+        Outputs:
+            self.sols: list(sols)
+                A list with the original population concatenated with the sons
+        '''
         sons = []
         for (j1, j2) in parents:
             son = self.sols[j1].reproduce(self.sols[j2])
@@ -585,6 +635,7 @@ class SolCollection:
     def __repr__(self):
         return (str(self.sols))
 
+
 class Station:
     def __init__(self, x, y, dem):
         self.x = x
@@ -593,9 +644,6 @@ class Station:
 
     def distance(self, other):
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** .5
-
-
-
 
 # Constructivo 1
 
