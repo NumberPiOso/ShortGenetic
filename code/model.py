@@ -62,6 +62,8 @@ class Sol:
             The cost function associated with unbalance in BRP.
         cost_tsp: float
             The cost of the route (calculated with distance between stations)
+        _succesors: set(int, int)
+            The arcs present at every solution
     Methods: 
         calc_cost_tsp
         calc_cost_unbalance
@@ -246,7 +248,7 @@ class Sol:
     def successors_set(self):
         route = self.route
         n = len(route)
-        successors = set( [(route[i], route[i+1]) for i in range(n-1)])
+        successors = set(((route[i], route[i+1]) for i in range(n-1)))
         return successors
 
     def one_gen_mut(self):
