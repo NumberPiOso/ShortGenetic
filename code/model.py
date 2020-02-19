@@ -84,6 +84,8 @@ class Sol:
         # Where the route ends (exclusive)
         self.cost_unb, self._solution = self.calc_cost_unbalance()
         self.cost_tsp = self.calc_cost_tsp(self._solution)
+        # Successors set
+        self._successors = self.successors_set()
 
     @classmethod
     def random_sol(cls, end=None):
@@ -330,8 +332,7 @@ class SolCollection:
                 chuncked_iters.append(iters)
                 if interactive:
                     bests = levels_table[levels_table['Pod_lev'] == 0].values[:,0:2]
-                    best_points = np.concatenate([best_points, bests])
-                    self.list_points.append(best_points) #save results
+                    self.list_points.append(bests) #save results
                 if print_:
                     print('---------------------------------------------------------')
                     print(f'time := {overall_time:.2f}.  iterations : {iters}')
