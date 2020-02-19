@@ -33,3 +33,14 @@ Cuando hay muchas soluciones de nivel 0 con debalance 6. Esas serán las elegida
 ###################### Presentacion 21/02/2020
 
 Sacar las soluciones que son demasiado parecidas en su ruta.
+
+
+Implemented succesors set at every solution, and the function that checks how many 
+of this links are the same. 
+
+Given the random solutions unfair advantage
+
+In general iteration added:
+    -take out alikes
+    -poblation replacement (done before by medal table)
+

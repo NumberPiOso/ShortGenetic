@@ -55,7 +55,10 @@ def get_paretto_from_array(array):
 class Sol:
     """
     A class used to represent a solution tp BRP.
+
     Attributes:
+        _stations: class attribute list(station)
+            Represents all stations of the problem.
         route: list[ints]
             The order of the stations
         cost_unb: float or int
@@ -223,7 +226,6 @@ class Sol:
             new_sol.display()
         return new_sol
 
-
     @classmethod
     def two_opt_sol(cls, rks, i, j, route):
         # Creates a Sol object resulted from applying 2opt with indexes (i,j) 
@@ -250,6 +252,13 @@ class Sol:
         n = len(route)
         successors = set(((route[i], route[i+1]) for i in range(n-1)))
         return successors
+
+    def isLike(self, other):
+        n = len(self._successors)
+        succ_1 = self._successors
+        succ_2 = other._successors
+        likeness = len(succ_1.intersection(succ_2)) / (n-1)
+        return likeness
 
     def one_gen_mut(self):
         n = len(self.route)
@@ -303,6 +312,8 @@ class SolCollection:
         self.n_elite = n_pob
         self.n_random_sols = num_random_sols
         self.n_mutations = int(round(ratio_mutation * self.k ))
+         # If two solutions are equal in at least 80% arcs. Do not show mercy.
+        self.max_like = .80
 
         # Best sols info
         self._times = defaultdict(int) # Track times, done by decorator @track_time 
@@ -323,9 +334,15 @@ class SolCollection:
         while overall_time < max_time:
             iters += 1
             time_init = time()
+            # Medal table,  take out alikes and replace poblation
             levels_table = self.medal_table(interactive)
+            removed_sols = self.take_out_alikes()
+            sols = self.poblation_replacement(include_randoms=True)
+            # Parent Selection
             parents = self.parent_selection()
+            # Reproduction
             sols = self.reproduce(parents, option=reproduction_type)
+            # Mutation
             self.one_gen_mutation()
             overall_time += time() - time_init
             if time_to_chunk < overall_time:
@@ -387,6 +404,9 @@ class SolCollection:
 
     @track_time
     def medal_table(self, show=False):
+        '''Find the non dominance level that a solution is in. 
+        Then sorts the solutions according to that level, lower -> better.
+        '''
         # Get costs
         columns = ['Unb', 'Tsp', 'Sol', 'Pod_lev']
         data = []
@@ -412,8 +432,33 @@ class SolCollection:
         # Sort solutions from best to worst
         table.sort_values(['Pod_lev'], inplace=True)
         order_solutions = table.index
-        self.sols = [self.sols[ii] for ii in order_solutions[:self.k]]
+        self.sols = [self.sols[ii] for ii in order_solutions]
         return table
+
+    @track_time
+    def take_out_alikes(self):
+        orig_num = len(self.sols)
+        rem_sols_index = []
+        act_num_sols = orig_num
+        cont = 0
+        i = 0
+        while (i < act_num_sols-1):
+            sol_i = self.sols[i]
+            sol_j = self.sols[i+1]
+            # print('Take out alikes method')
+            # print(sol_i)
+            # print(sol_j)
+            # print('ratio :', sol_i.isLike(sol_j))
+            if (sol_i.isLike(sol_j) > self.max_like):
+                self.sols.pop(i+1)
+                rem_sols_index.append( i+1+(orig_num-act_num_sol))
+                act_num_sol -= 1
+            else:
+                i += 1
+        # if orig_num - act_num_sol:
+        #     print(f'Se quitaron {orig_num - act_num_sol} soluciones por parecidas.')
+        #     print('Las de indices ', rem_sols_index)
+        return rem_sols_index
 
     @track_time
     def parent_selection(self):
@@ -462,146 +507,6 @@ class SolCollection:
         self.sols = [*self.sols, *sons]
         return self.sols
 
-    def local_searchs(self, levels_table, removed_sols):
-        '''Some basic steps
-        1. Get solutions with costs
-        2. Normalize
-        3. psols <- Non dominated non_repeated sols
-        4. a <- Solution with biggest vicinity
-        5. w*, z* <- Optimize model(table, a)
-        6. Get z_i for all solutions.
-        6.1 take out z_i that come from trivial solution
-        7. Select sols with more number of z_i below z_i + e
-           (A possible solution for e coul be the other extreme of a)
-        8. Local search selected sols.
-        '''
-        # 1. Get all solutions with costs
-        def delete_indexes_deleted(table, removed_sols):
-            '''Inputs are the table before the solutions remotions and
-            the indices of the removed sols. It's output its the table
-            with the indices of the solutions and withouth any of the 
-            corrected sols.
-            Example:
-            levels table ->
-            index  Unb  Tsp  Sol
-            2   6   520 0
-            8   6   520 1
-            28   6   520 5
-            33   6   520 6
-            37   6   520 7
-            43   6   520 8
-            47   6   520 9
-            21  12  252 4
-            12  20  198 2
-            16  20  198 3
-            
-            removed_sols -> [1,2,4,5,6]
-
-            Output:
-                        index  Unb  Tsp  Sol
-                2   6   520 0
-                37   6   520 2
-                43   6   520 3
-                47   6   520 4
-                16  20  198 1
-            '''
-            pd.options.mode.chained_assignment = None  # default='warn'
-            l = removed_sols
-            assert(all(l[i] <= l[i+1] for i in range(len(l)-1))) # is sorted    
-            # Delete
-            for i in removed_sols:
-                table = table[table['Sol'] != i]
-            # print(len(table['Sol'].unique()))
-            for i in reversed(removed_sols):    
-                table.loc[table['Sol'] > i,'Sol'] -= 1
-            return table
-
-        table = delete_indexes_deleted(levels_table, removed_sols)
-        # 2. Normalize
-        norm_cols = ['Unb', 'Tsp']
-        df = table[norm_cols]
-        df =(df - df.min())/ (df.max() - df.min())
-        table[norm_cols] = df
-        # 3. psols <- Non dominated non_repeated sols
-        psols = table[table['Pod_lev'] == 0]
-        # print('-----------------------------')
-        # # print(table)
-        # print(psols)
-        psols.drop_duplicates(subset=['Unb', 'Tsp'], inplace=True)
-        if len(psols) <= 2:
-            # print('Local search under this model could not be implemented')
-            # print('Only two pareto sols,what a shame')
-            return self.sols
-        # 4. a <- Solution with biggest vicinity
-        values = deepcopy(psols[['Unb', 'Tsp']].values)     
-        distances =  np.sqrt(np.sum((values[:-1] - values[1:])**2, axis=1))
-            # distance i to i+1
-        vicinities = distances[:-1] + distances[1:]
-        a = 1 + np.argmax(vicinities) # First do not have vicinity
-        # print(' Non dominated sols ')
-        # print(values)
-        # print('distances')
-        # print(distances)
-        # print('Biggest vicinity ', a)
-        # 5. w*, z* <- Optimize model(table, a)
-        ba, ca = values[a]
-        bant, cant =  values[a-1]
-        cota_sup = (bant - ba)/ (ca - cant + bant - ba)
-        bsig, csig = values[a+1]
-        cota_inf = (ba - bsig)/ (csig - ca + ba - bsig)
-        if ca - ba > 0:
-            wopt = cota_sup
-            zopt = wopt * (ca - ba) + ba
-            # epsilon = cota_inf * (ca - ba) + ba - zopt 
-            # z_max = cota_inf * (ca - ba) + ba
-            # z_max = wopt * (csig - bsig) + bsig
-            # z_max = wopt * (csig - bsig) + ba
-            z_max = 1.1 * zopt
-        elif ca - ba < 0:
-            # print(ca - ba)
-            wopt = cota_inf
-            zopt = wopt * (ca - ba) + ba
-            # z_max = cota_sup * (ca - ba) + ba
-            # z_max = wopt * (cant - bant) + bant
-            # z_max = wopt * (cant - bant) + ba
-            z_max = 1.1 * zopt
-        else:
-            raise ValueError(' el modelo de optimizacion no tiene sentido')
-        # epsilon = .1*zopt
-        # assert( epsilon >= 0)
-        assert( z_max > zopt )
-        # 6. Get z_i for all solutions.
-        z_func = lambda b, c: wopt * (c-b) + b
-        table['Zi'] = z_func(table['Unb'], table['Tsp'])
-        # 6.1 delete trivials
-        table = table[table['Tsp'] != 0]
-        # 7. select solutios
-        selected = table['Sol'][table['Zi'] < z_max]
-        selected = selected.unique()
-        # print(' From ', len(table['Sol'].unique()), 'selections possible,s\
-        #      Just selected' , len(selected))
-        # print('Selected solutions ', selected)
-        # 8. LS selected sols
-        all_lss = []
-        #local search for repeated is O(1) and returns empty
-        for s in list(selected):
-            ls_sols = self.sols[s].ls_fast2opt( self.rt_non_dominance)
-            if ls_sols:
-                all_lss.append(ls_sols)
-        new_sols = [item for sublist in all_lss for item in sublist]
-        if new_sols:
-            self.sols = [*self.sols, *new_sols]
-
-        #plt.plot(table['Tsp'], table['Unb'])
-        # Tournament local search
-        #     list_sols = range(len(self.sols))
-        #     i = min(random.sample(list_sols, 2))
-        #     if i not in already_used:
-        #         new_sols = self.sols[i].ls_fast2opt( self.rt_non_dominance)
-        #         if new_sols: # it could be empty if local optimal
-        #             # print('local search suceed.')
-        #             self.sols = [*self.sols, *new_sols]
-        return self.sols
 
     @track_time
     def one_gen_mutation(self):
@@ -615,19 +520,16 @@ class SolCollection:
         '''Keep the best solutions, but change the last ones with random ones.'''
         num_sols = len(self.sols)
         sols_that_stay = self.k - self.n_random_sols
+        # Special case where I deleted too many sols.
         if num_sols < sols_that_stay:
-            r = sols_that_stay - num_sols
-            new_sols = self.gen_random_sols(r)
+            rn = sols_that_stay - num_sols
+            new_sols = [Sol.random_sol() for __ in range(rn)]
             self.sols = [*self.sols, *new_sols]
-        random_sols = self.gen_random_sols(self.n_random_sols)
-        self.sols = [*self.sols[:sols_that_stay], *random_sols]
+        # General case
+        random_sols = [Sol.random_sol() for __ in range(self.n_random_sols)]
+        self.sols = [*random_sols, *self.sols[:sols_that_stay]] # By this order, random are given advantage
         return self.sols
 
-    def gen_random_sols(self, num_sols=0):
-        n = len(self.sols[0])
-        new_rks = np.random.random((num_sols, n))
-        new_sols = [Sol(rks) for rks in new_rks]
-        return new_sols
 
     def get_times(self): 
         data = self._times
