@@ -65,7 +65,7 @@ def normalize_list_in_place(list_points, get_lims_pts=get_lims_pts):
     for array in list_points:
         normalize_in_pl(array, x_lims, y_lims)
 
-def plot_list_points(list_points, iters_list, times_list, n=1):
+def plot_list_points(list_points, iters_list, times_list, n=0):
     points = list_points[n]
     x, y = points[:,0], points[:,1]
     plt.figure(figsize=(14, 6))
@@ -77,3 +77,4 @@ def plot_list_points(list_points, iters_list, times_list, n=1):
     plt.ylabel('Tsp')
     plt.grid()
     plt.show()
+    return plt

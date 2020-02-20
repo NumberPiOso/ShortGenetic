@@ -250,7 +250,7 @@ class Sol:
     def successors_set(self):
         route = self.route
         n = len(route)
-        successors = set(((route[i], route[i+1]) for i in range(n-1)))
+        successors = set(( (route[i], route[i+1]) for i in range(n-1)))
         return successors
 
     def isLike(self, other):
@@ -337,7 +337,7 @@ class SolCollection:
             # Medal table,  take out alikes and replace poblation
             levels_table = self.medal_table(interactive)
             removed_sols = self.take_out_alikes()
-            sols = self.poblation_replacement(include_randoms=True)
+            sols = self.poblation_replacement_wRandoms()
             # Parent Selection
             parents = self.parent_selection()
             # Reproduction
@@ -451,8 +451,8 @@ class SolCollection:
             # print('ratio :', sol_i.isLike(sol_j))
             if (sol_i.isLike(sol_j) > self.max_like):
                 self.sols.pop(i+1)
-                rem_sols_index.append( i+1+(orig_num-act_num_sol))
-                act_num_sol -= 1
+                rem_sols_index.append( i+1+(orig_num-act_num_sols))
+                act_num_sols -= 1
             else:
                 i += 1
         # if orig_num - act_num_sol:
@@ -516,7 +516,8 @@ class SolCollection:
             index_sol = np.random.randint(0, k)
             self.sols[index_sol].one_gen_mut()
 
-    def poblation_replacement(self):
+    @track_time
+    def poblation_replacement_wRandoms(self):
         '''Keep the best solutions, but change the last ones with random ones.'''
         num_sols = len(self.sols)
         sols_that_stay = self.k - self.n_random_sols
