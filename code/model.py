@@ -93,15 +93,19 @@ class Sol:
         self._successors = self.successors_set()
 
     @classmethod
-    def random_sol(cls, end=len(Sol._stations)):
-        k = len(Sol._stations)
+    def random_sol(cls, end=None):
+        k = len(cls._stations)
+        if not end:
+            end = k
         order = [ *range(k)]
         random.shuffle(order)
         return(cls(order, end))
 
     @classmethod
-    def random_sol_nn(cls, end=len(Sol._stations)):
+    def random_sol_nn(cls, end=None):
         k = len(Sol._stations)
+        if not end:
+            end = k
         range_list = [*range(k)]
         i0 = np.random.randint(k)
         route = [i0]
