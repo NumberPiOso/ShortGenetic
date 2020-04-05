@@ -566,7 +566,7 @@ class Station:
         self.y = y
         self.dem = dem
 
-    @lru_cache()
+    @lru_cache(maxsize=256)
     def distance(self, other):
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** .5
 
