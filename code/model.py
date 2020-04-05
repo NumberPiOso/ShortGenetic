@@ -9,6 +9,7 @@ from time import time
 import sys, os
 from level_function import  cy_medal_organizer
 from collections import defaultdict
+from functools import lru_cache
 
 def read_stations(table):
     stations = []
@@ -565,6 +566,7 @@ class Station:
         self.y = y
         self.dem = dem
 
+    @lru_cache()
     def distance(self, other):
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** .5
 
