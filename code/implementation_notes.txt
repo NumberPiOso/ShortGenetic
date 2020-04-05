@@ -35,12 +35,38 @@ Cuando hay muchas soluciones de nivel 0 con debalance 6. Esas serán las elegida
 Sacar las soluciones que son demasiado parecidas en su ruta.
 
 
-Implemented succesors set at every solution, and the function that checks how many 
-of this links are the same. 
+Implemented succesors set at every solution, and the function that 
+checks how many of this links are the same. 
 
 Given the random solutions unfair advantage
 
 In general iteration added:
     -take out alikes
     -poblation replacement (done before by medal table)
+
+
+
+
+Comparar que paso cuando meto las dos aleatorias de ultimas. ¿Tuvo efecto
+notable  o no?
+
+Meter aleatorios condicionados a cuantas soluciones nuevas se han encontrado
+en las ultimas x iteraciones.
+
+
+Hacer un constructivo aleatorizado para más cercanos.
+- Vecino más cercano.
+
+############## Presentacion  06 Marzo 2020
+
+1. Puedo meter caché para que guarde las distancias entre estaciones.
+2. Notable el cambio o no
+3. Meter numero de aleatorios dependiendo de cuantas soluciones nuevas se han encontrado en cada
+iteracion
+
+############### Presentacion 11 Marzo 2020
+
+Requirimientos
+- Modelo de optimizacion en C++
+- métricas para comparar si es bueno meter soluciones parciales o no
 

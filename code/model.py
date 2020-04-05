@@ -93,13 +93,27 @@ class Sol:
         self._successors = self.successors_set()
 
     @classmethod
-    def random_sol(cls, end=None):
+    def random_sol(cls, end=len(Sol._stations)):
         k = len(Sol._stations)
         order = [ *range(k)]
         random.shuffle(order)
-        if end is None:
-            end=k
         return(cls(order, end))
+
+    @classmethod
+    def random_sol_nn(cls, end=len(Sol._stations)):
+        k = len(Sol._stations)
+        range_list = [*range(k)]
+        i0 = np.random.randint(k)
+        route = [i0]
+        stations = cls._stations
+        while (len(route) < k):
+            sel_stats_ind = np.delete(range_list, route)
+            sel_stats = [stations[j] for j in sel_stats_ind]
+            i1 = closest_station(stations[i0], sel_stats, sel_stats_ind)
+            route.append(i1)
+            i0 = i1
+        return(cls(route, end))
+
 
     def calc_cost_unbalance(self):
         '''
@@ -530,7 +544,6 @@ class SolCollection:
         random_sols = [Sol.random_sol() for __ in range(self.n_random_sols)]
         self.sols = [*random_sols, *self.sols[:sols_that_stay]] # By this order, random are given advantage
         return self.sols
-
 
     def get_times(self): 
         data = self._times

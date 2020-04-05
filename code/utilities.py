@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+import numpy as np
 from functools import wraps
 from time import time
 import matplotlib.pyplot as plt
@@ -78,3 +79,10 @@ def plot_list_points(list_points, iters_list, times_list, n=0):
     plt.grid()
     plt.show()
     return plt
+
+
+### New random solutions
+def closest_station(stat_i, sel_stats, sel_stats_ind):
+    distances = [stat_i.distance(stat_j)  for stat_j in sel_stats]
+    argmin_dist = np.argmin(distances)
+    return sel_stats_ind[argmin_dist]
