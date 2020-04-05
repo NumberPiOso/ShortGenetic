@@ -128,9 +128,8 @@ def write_non_dominated_frontiers(time, files_names, possible_values, dir_path):
             out_file_name = tuples_combinations.string_params(params) + '.txt'
             np.savetxt(out_file_name ,non_dom_result)
 
-def write_excel_of_metrics(file_name, directories):
+def write_excel_of_metrics(file_name, directories, DIR_RES, DIR_PATH):
     # Writing EXCEL file with EXCEL sheet with results per folder of data
-
     with pd.ExcelWriter(DIR_RES + file_name) as writer:
         for dire in directories:
             param_list, frontiers_list = read_frontiers_infolder(DIR_PATH, dire)
@@ -158,33 +157,8 @@ def write_excel_of_metrics(file_name, directories):
             df_data.to_excel(writer, sheet_name=dire ,index=False)
         writer.save()
 
-if __name__ == "__main__":
-    
-    DIR_PATH = '/home/pablo-ubuntu/Dropbox/PI/ShortGenetic/code/tunning_params/frontiers/'
-    DIR_RES = '/home/pablo-ubuntu/Dropbox/PI/ShortGenetic/code/tunning_params/'
-    time = 8 # 3600/ 24/ 56#
-    files_names = {
-        'files_type': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'], # 'A'
-        'files_n': ['20', '30', '40', '50', '60', '100', '300']
-    }
-
-    possible_values = {
-        'n_pob': [20, 40, 80],
-        'ratios_sons': [.75, 1],
-        'ratio_mutation': [.05, .2],
-        'num_random_sols': [4, 10]
-    }
-
-    # Create folders with the non dominated frontiers
-    write_non_dominated_frontiers(time, files_names, possible_values, DIR_PATH)
-    
-    # Write excel of metrics
-    os.chdir(DIR_PATH)
-    directories = ls()
-    write_excel_of_metrics(file_name='all_results.xlsx', directories=directories)   
-    
-
-    fp_consol = 'means.xlsx'
+def write_excel_consolidated(fp_consol, directories, DIR_RES):
+    # Writing EXCEL file with EXCEL sheet with RESULTS CONSOLIDATED
     with pd.ExcelWriter(DIR_RES + fp_consol, mode='w') as writer:
         all_metrics = []
         m_names = ['set_coverage', 'Gen_dist', 'spacing', 'euclidean']
