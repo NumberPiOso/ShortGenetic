@@ -1,3 +1,4 @@
 code/\.*
 code/__pycache__/
 code/cython_build/.ipynb_checkpoints/
+code/exact_models_cpp/images/
