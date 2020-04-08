@@ -24,13 +24,15 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 				string s = "y_" + itor(i) + "_" + itor(j);
 				string s1 = "x_" + itor(i) + "_" + itor(j);
 				string s2 = "z_" + itor(i) + "_" + itor(j);
-
+                // xij
 				y[i][j] = model.addVar(0.0, 1.0, distances[i][j], GRB_BINARY, s);
-				x[i][j] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s1);
-				z[i][j] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s2);
+                //  Lij
+				x[i][j] = model.addVar(x[i][j] = model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s1);, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s1);
+				// yij
+                z[i][j] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s2);
 			}
             string s3 = "s_" + itor(i);
-            sv[i] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s3);
+            sv[i] = model.addVar(0.0, 1.0, 0.0, GRB_BINARY, s3);
 		}
         xu = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, 'x_max');
         xl = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, 'x_min');
@@ -43,22 +45,23 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 		}
 		*/
 
-		// 16. I have no idea
+		// 16. Each node is is visited if s_i is 1 
+
         for (j = 0; j < numberNodes; j++) {
             GRBLinExpr expr = 0;
             for (i = 0; i < numberNodes; i++) {
-				expr += x[i][j];
+				expr += y[i][j];
 			}
             expr -= sv[j];
             string s = "s1__" + itor(j);
             model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
 		}
 
-        // 17. 
+        // 17. Each node is is visited if s_i is 1 
         for (i = 0; i < numberNodes; i++) {
             GRBLinExpr expr = 0;
             for (j = 0; j < numberNodes; j++) {
-				expr += x[i][j];
+				expr += y[i][j];
 			}
             expr -= sv[i];
             string s = "s2__" + itor(i);
@@ -119,7 +122,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
                 expr -= x[j][i];
 			}
             expr -= vNodes.at(i).getq() * sv[i];
-			string s = "PropSatisfied_" + itor(i);
+			string s = "DemandSatisfied_" + itor(i);
 			model.addConstr(expr, GRB_EQUAL, 1.0, s);
 		}
 
@@ -161,8 +164,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 
 
         // No hay 14
-        // 14. Max. capacity
-			
+        // 14. Max. capacity	
         GRBLinExpr expr = 0;
         expr += xu;
         expr -= xl;

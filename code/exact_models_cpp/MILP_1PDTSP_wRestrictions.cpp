@@ -23,7 +23,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 				string s1 = "x_" + itor(i) + "_" + itor(j);
 				string s2 = "z_" + itor(i) + "_" + itor(j);
 				y[i][j] = model.addVar(0.0, 1.0, distances[i][j], GRB_BINARY, s);
-				x[i][j] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s1);
+				x[i][j] = model.addVar(-GRB_INFINITY, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s1); // 
 				z[i][j] = model.addVar(0.0, GRB_INFINITY, 0.0, GRB_CONTINUOUS, s2);
 			}
 		}
@@ -63,7 +63,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 			model.addConstr(expr, GRB_EQUAL, 0.0, s);
 		}
 
-		// 4. Decreasing order for visited nodes
+		// 4, 5, 6. Decreasing order for visited nodes
 		for (i = 1; i < numberNodes; i++) {
 			GRBLinExpr expr = 0;
 			for (k = 0; k < numberNodes; k++){
@@ -76,18 +76,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 			model.addConstr(expr, GRB_EQUAL, 1.0, s);
 		}
 
-        // No hay 5
-        // 5. Order of visites something
-        // sum y_0i = n  --> sum z_0i == n
-        GRBLinExpr expr = 0;
-        for (i = 0; i < numberNodes; i++){
-            expr +=  z[0][i];
-        }
-        string s = "OrderVisits_Node_0";
-        model.addConstr(expr, GRB_LESS_EQUAL, numberNodes, s);
-
-		// 6. Order for visited nodes
-		for (i = 0; i < numberNodes; i++) {
+        for (i = 0; i < numberNodes; i++) {
 			for (j = 0; j < numberNodes; j++) {
 				GRBLinExpr expr = 0;
 				expr += z[i][j];
@@ -96,16 +85,17 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 				model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
 			}
 		}
+        
 
         // No hay 7
         // 7. At least one bike has to be carried
         for (i = 0; i < numberNodes; i++) {
 			for (j = 0; j < numberNodes; j++) {
 				GRBLinExpr expr = 0;
-				expr += y[i][j];
-				expr -= z[i][j];
+				expr -= y[i][j];
+				expr += z[i][j];
 				string s = "MinCarriedBikes_" + itor(i) + "_" + itor(j);
-				model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
+				model.addConstr(expr, GRB_GREATER_EQUAL, 0.0, s);
 			}
 		}
 
@@ -123,14 +113,24 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 			model.addConstr(expr, GRB_EQUAL, 0.0, s);
 		}
 
+		// 10. The load of the vehicle can not exceed its capacity
+		for (i = 0; i < numberNodes; i++) {
+			for (j = 0; j < numberNodes; j++) {
+				GRBLinExpr expr = 0;
+				expr += x[i][j];
+				expr += Q * y[i][j];
+				string s = "VehCapacity_negative" + itor(i) + "_" + itor(j);
+				model.addConstr(expr, GRB_GREATER_EQUAL, 0.0, s);
+			}
+		}
 
-		// 10, 11. The load of the vehicle can not exceed its capacity
+		// 11. The load of the vehicle can not exceed its capacity
 		for (i = 0; i < numberNodes; i++) {
 			for (j = 0; j < numberNodes; j++) {
 				GRBLinExpr expr = 0;
 				expr += x[i][j];
 				expr -= Q * y[i][j];
-				string s = "VehCapacity_" + itor(i) + "_" + itor(j);
+				string s = "VehCapacity_positive" + itor(i) + "_" + itor(j);
 				model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
 			}
 		}
@@ -140,10 +140,10 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
         for (i = 0; i < numberNodes; i++) {
 			for (j = 0; j < numberNodes; j++) {
 				GRBLinExpr expr = 0;
-				expr += x[i][j];
-				expr -= xu;
+				expr -= x[i][j];
+				expr += xu;
 				string s = "MaxCarriedBikes_" + itor(i) + "_" + itor(j);
-				model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
+				model.addConstr(expr, GRB_GREATER_EQUAL, 0.0, s);
 			}
 		}
 
@@ -156,7 +156,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 				expr += xl;
 				expr -= x[i][j];
 				string s = "MinCarriedBikes_" + itor(i) + "_" + itor(j);
-				model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
+				model.addConstr(expr, GRB_LESS_EQUAL, Q, s);
 			}
 		}
 
