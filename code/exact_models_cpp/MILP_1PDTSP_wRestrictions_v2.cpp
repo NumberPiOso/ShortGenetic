@@ -110,7 +110,7 @@ MILP_1PDTSP::MILP_1PDTSP(vector<Node> vNodes, int Q)
 			}
             expr -= vNodes.at(i).getq()
             string s = "Satisfied_dem_" + itor(i);
-            model.addConstr(expr, GRB_LESS_EQUAL, 0.0, s);
+            model.addConstr(expr, GRB_EQUAL, 0.0, s);
 		}
 
 		// 10. The load of the vehicle can not exceed its capacity
