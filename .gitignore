@@ -1,3 +1,5 @@
 code/\.*
 code/__pycache__/
 code/cython_build/.ipynb_checkpoints/
+*.mps
+n_pob*
