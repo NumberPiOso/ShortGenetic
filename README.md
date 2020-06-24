@@ -1,5 +1,7 @@
 # SHORT GENETIC
 
+
+## Explicación general del proyecto
 Enmarcado como parte del proyecto **MOCO** (MultiObjective Combinatorial Optimization) en el cual se busca un algoritmo genético más simple para el problema **BRP**.
 
 Esta organizado de la siguiente manera:
@@ -14,8 +16,9 @@ Esta organizado de la siguiente manera:
 **cython_build**: Algunas construcciones de los méthodos más lentos en Python y C, para hacerlos más rápidos.
 **Avances**: En esta carpeta se guardaran los avances que se vayan haciendo del problema, del tal manera que se pueda mantener una muestra de que se ha ido haciendo.
 
-### Ultimos avances
+## Ultimos avances
+
+[Verlos acá](./code/avances/0410/avances_0410.ipynb) 
 
 - Túneo de parámetros.  
-- Modelos exactos c++.  
-[Verlos acá](./code/avances/0410/avances_0410.ipynb) 
+- Modelos exactos c++.
