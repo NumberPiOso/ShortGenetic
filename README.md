@@ -14,3 +14,8 @@ Esta organizado de la siguiente manera:
 **cython_build**: Algunas construcciones de los méthodos más lentos en Python y C, para hacerlos más rápidos.
 **Avances**: En esta carpeta se guardaran los avances que se vayan haciendo del problema, del tal manera que se pueda mantener una muestra de que se ha ido haciendo.
 
+### Ultimos avances
+
+- Túneo de parámetros.  
+- Modelos exactos c++.  
+[Verlos acá](./code/avances/0410/avances_0410.ipynb) 

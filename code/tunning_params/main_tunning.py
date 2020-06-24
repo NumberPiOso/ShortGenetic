@@ -23,7 +23,7 @@ write_non_dominated_frontiers(time, files_names, possible_values, DIR_PATH)
 # Write excel of metrics
 os.chdir(DIR_PATH)
 directories = ls()
-write_excel_of_metrics(file_name='all_results.xlsx', directories=directories, DIR_RES=DIR_RES, DIR_PATH=DIR_PATH)   
+write_excel_of_metrics(file_name='all_results_by_instance.xlsx', directories=directories, DIR_RES=DIR_RES, DIR_PATH=DIR_PATH)   
 
 # Write means consolidated with ponderated metrics and write them in means.xlsx
-write_excel_consolidated('means.xlsx', directories, DIR_RES)
+write_excel_consolidated('mean_instances.xlsx', directories, DIR_RES)
